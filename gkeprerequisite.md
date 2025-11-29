@@ -94,6 +94,11 @@ Now we create the "computer" that will run your code. We will create a **Standar
     *   **`--spot`**: Uses spare capacity for ~60-90% discount.
     *   **`--machine-type e2-small`**: A small, cheap machine type.
 
+    > **Important**: If you encounter "403 Permission Denied" errors later, run this command to ensure the nodes are using the GKE Metadata Server:
+    > ```bash
+    > gcloud container node-pools update default-pool --cluster agent-cluster --zone us-central1-a --workload-metadata=GKE_METADATA
+    > ```
+
 3.  Wait for a few minutes. When it finishes, you will see a success message.
 
 **You are now ready to proceed to `step.md`!**

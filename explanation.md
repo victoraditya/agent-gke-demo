@@ -91,3 +91,8 @@ We use **Workload Identity** to securely allow your GKE Pods to access Google Cl
 *   **Binding**: We "bind" them together so `agent-sa` can "act as" `local-dev-sa`.
 
 This is why we added the `--workload-pool` flag when creating the cluster and the `iam.gke.io/gcp-service-account` annotation in `k8s/serviceaccount.yaml`.
+
+> **Troubleshooting**: If you still get 403 errors, ensure your Node Pool is configured to use the GKE Metadata Server:
+> ```bash
+> gcloud container node-pools update default-pool --cluster agent-cluster --zone us-central1-a --workload-metadata=GKE_METADATA
+> ```
