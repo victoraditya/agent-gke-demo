@@ -1,0 +1,5 @@
+google-cloud-aiplatform
+langchain-google-vertexai
+langchain
+flask
+gunicorn

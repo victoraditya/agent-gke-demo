@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-gke-demo
+  labels:
+    app: agent-gke-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-gke-demo
+  template:
+    metadata:
+      labels:
+        app: agent-gke-demo
+    spec:
+      serviceAccountName: default # Will be updated to use Workload Identity later
+      containers:
+      - name: agent-gke-demo
+        image: agent-gke-demo:latest # Placeholder, will be replaced by skaffold or manual build
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: GOOGLE_CLOUD_PROJECT
+          value: "agent-gke-demo"
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+        # Liveness probe to check if the app is alive
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        # Readiness probe to check if the app is ready to serve traffic
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
