@@ -5,8 +5,8 @@ Follow these exact steps to push your project to GitHub and automatically deploy
 ## Prerequisites
 
 1.  **GCP Project**: You have a Google Cloud Project ID.
-2.  **GKE Cluster**: You have created the cluster using the command in `explanation.md`.
-3.  **Service Account Key**: You have the JSON key for a service account with permissions (`Kubernetes Engine Developer`, `Artifact Registry Writer`, `Vertex AI User`).
+2.  **GKE Cluster**: You have created the cluster using the command in `gkeprerequisite.md` (with Workload Identity).
+3.  **Service Account Key**: You have the JSON key for a service account with permissions (`Kubernetes Engine Developer`, `Artifact Registry Admin`, `Vertex AI User`, `Storage Admin`).
 
 ## Step 1: Create a GitHub Repository
 
@@ -28,12 +28,12 @@ The automated deployment needs access to your GCP project.
 | :--- | :--- |
 | `GCP_PROJECT_ID` | Your Google Cloud Project ID (e.g., `my-agent-project-123`). |
 | `GCP_SA_KEY` | Paste the entire content of your Service Account JSON key file. |
-| `GKE_CLUSTER_NAME` | `agent-cluster` (or whatever you named it). |
+| `GKE_CLUSTER` | `agent-cluster` (or whatever you named it). |
 | `GKE_ZONE` | `us-central1-a` (or the zone you chose). |
 
 ## Step 3: Push Your Code
 
-Open your terminal in the project directory (`/Users/aditya/Desktop/agentgke`) and run these commands:
+Open your terminal in the project directory and run these commands:
 
 ```bash
 # 1. Initialize Git (if not already done)
@@ -61,19 +61,18 @@ git push -u origin main
 2.  You should see a workflow run named **"Build and Deploy to GKE"** starting up.
 3.  Click on it to watch the progress. It will:
     *   Build your Docker image.
-    *   Push it to Google Container Registry.
+    *   Push it to Google Artifact Registry.
     *   Deploy it to your GKE cluster.
 
 ## Step 5: Verify Live App
 
 Once the Action is green (Success):
 
-1.  Check the External IP of your service:
-    ```bash
-    kubectl get services
-    ```
-2.  Copy the `EXTERNAL-IP`.
-3.  Test your live agent:
+1.  **Get the External IP**:
+    *   If you have `kubectl`: `kubectl get services`
+    *   **Or go to GCP Console**: Kubernetes Engine > Services & Ingress > Copy the Endpoint IP.
+
+2.  **Test your live agent**:
     ```bash
     curl -X POST http://<EXTERNAL-IP>:80/run-agents \
       -H "Content-Type: application/json" \

@@ -93,3 +93,22 @@ You should receive a JSON response containing:
 
 *   **403 Permission Denied**: Ensure you ran `gcloud auth application-default login` and that your user has `Vertex AI User` role in the GCP project.
 *   **Quota Exceeded**: If you hit rate limits, wait a minute and try again. `gemini-1.5-flash` has generous free tier limits.
+
+## Cost Optimization & Cleanup (Important!)
+
+To avoid incurring unexpected charges from Google Cloud, **delete your cluster** when you are done testing.
+
+### 1. Delete the GKE Cluster
+This will remove the cluster and the associated Load Balancer (which costs money).
+
+```bash
+gcloud container clusters delete <YOUR_CLUSTER_NAME> --zone <YOUR_ZONE>
+```
+*Example: `gcloud container clusters delete agent-cluster --zone us-central1-a`*
+
+### 2. Delete Artifact Registry Images (Optional)
+Storage costs are low, but you can delete the images if you want to be thorough.
+
+```bash
+gcloud artifacts repositories delete agent-repo --location=us-central1
+```

@@ -12,8 +12,8 @@ This guide explains how the Agentic AI system is implemented and how to deploy i
 
 Before you can deploy, you need to set up the following on Google Cloud Platform (GCP) and GitHub:
 
-1.  **GCP Project**: Create a project and enable the **Vertex AI API**, **Kubernetes Engine API**, and **Container Registry API** (or Artifact Registry).
-2.  **GKE Cluster**: Create a **Standard** cost-optimized cluster using Spot instances.
+1.  **GCP Project**: Create a project and enable the **Vertex AI API**, **Kubernetes Engine API**, **Artifact Registry API**, and **Cloud Resource Manager API**.
+2.  **GKE Cluster**: Create a **Standard** cost-optimized cluster using Spot instances and Workload Identity.
     ```bash
     gcloud container clusters create agent-cluster \
       --zone us-central1-a \
@@ -21,17 +21,18 @@ Before you can deploy, you need to set up the following on Google Cloud Platform
       --num-nodes 1 \
       --spot \
       --disk-size=30GB \
-      --enable-autoscaling --min-nodes 1 --max-nodes 3
+      --enable-autoscaling --min-nodes 1 --max-nodes 3 \
+      --workload-pool=PROJECT_ID.svc.id.goog
     ```
-    *Note: This creates a Standard cluster (Autopilot is disabled by default).*
 3.  **Service Account**: Create a service account with permissions to:
-    -   Push to Container Registry (`Storage Admin`).
+    -   Push to Artifact Registry (`Artifact Registry Admin`).
     -   Deploy to GKE (`Kubernetes Engine Developer`).
     -   Use Vertex AI (`Vertex AI User`).
+    -   Store logs (`Storage Admin`).
 4.  **GitHub Secrets**: Go to your repository settings -> Secrets and variables -> Actions, and add:
     -   `GCP_PROJECT_ID`: Your Google Cloud Project ID.
     -   `GCP_SA_KEY`: The JSON key of the service account you created.
-    -   `GKE_CLUSTER_NAME`: The name of your GKE cluster (e.g., `agent-cluster`).
+    -   `GKE_CLUSTER`: The name of your GKE cluster (e.g., `agent-cluster`).
     -   `GKE_ZONE`: The zone of your cluster (e.g., `us-central1-a`).
 
 ## 3. Deployment Process
@@ -40,7 +41,7 @@ The deployment is automated using GitHub Actions (`.github/workflows/deploy.yaml
 
 1.  **Trigger**: When you push code to the `main` branch.
 2.  **Build**: The workflow builds the Docker image from the `Dockerfile`.
-3.  **Publish**: It pushes the image to Google Container Registry (`gcr.io`).
+3.  **Publish**: It pushes the image to **Google Artifact Registry** (`us-central1-docker.pkg.dev`).
 4.  **Deploy**: It uses `kubectl` to apply the Kubernetes manifests:
     -   Updates the `deployment.yaml` with the new image tag.
     -   Applies `deployment.yaml` to update the pods.
@@ -70,26 +71,23 @@ For local development on macOS, it is best to use `brew` for system tools and `p
     ```
 
 4.  **Authenticate**:
-    ```bash
-    gcloud auth application-default login
-    ```
+    You have two options:
+    *   **Option A (Standard)**: `gcloud auth application-default login`
+    *   **Option B (Service Account - Recommended)**:
+        1.  Download a service account key (JSON).
+        2.  `export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/key.json`
 
 5.  **Run App**:
     ```bash
     python main.py
     ```
 
-## 5. GKE Standard Cluster Setup
+## 5. Workload Identity (Security)
 
-To ensure you are using a **Standard** GKE cluster (not Autopilot) and keeping costs low, use the following command. This explicitly creates a Standard cluster with Spot instances.
+We use **Workload Identity** to securely allow your GKE Pods to access Google Cloud APIs (like Vertex AI) without storing long-lived keys in the container.
 
-```bash
-gcloud container clusters create agent-cluster \
-  --zone us-central1-a \
-  --machine-type e2-small \
-  --num-nodes 1 \
-  --spot \
-  --disk-size=30GB \
-  --enable-autoscaling --min-nodes 1 --max-nodes 3
-```
-*Note: This creates a Standard cluster by default. `e2-small` is very cost-effective.*
+*   **Kubernetes Service Account (`agent-sa`)**: This is an account inside the cluster.
+*   **Google Service Account (`local-dev-sa`)**: This is an account in GCP with permissions.
+*   **Binding**: We "bind" them together so `agent-sa` can "act as" `local-dev-sa`.
+
+This is why we added the `--workload-pool` flag when creating the cluster and the `iam.gke.io/gcp-service-account` annotation in `k8s/serviceaccount.yaml`.
