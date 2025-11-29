@@ -41,6 +41,10 @@ jobs:
         cluster_name: ${{ secrets.GKE_CLUSTER }}
         location: ${{ secrets.GKE_ZONE }}
 
+    # Sanitize environment variables (strip newlines)
+    - name: Sanitize Project ID
+      run: echo "PROJECT_ID=$(echo $PROJECT_ID | tr -d '\n')" >> $GITHUB_ENV
+
     # Build the Docker image
     - name: Build
       run: |-
