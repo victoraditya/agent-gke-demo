@@ -33,7 +33,7 @@ jobs:
     # Configure Docker to use the gcloud command-line tool as a credential
     # helper for authentication
     - run: |-
-        gcloud --quiet auth configure-docker
+        gcloud auth configure-docker us-central1-docker.pkg.dev
 
     # Get the GKE credentials so we can deploy to the cluster
     - uses: google-github-actions/get-gke-credentials@v2
@@ -49,15 +49,15 @@ jobs:
     - name: Build
       run: |-
         docker build \
-          --tag "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA" \
+          --tag "us-central1-docker.pkg.dev/$PROJECT_ID/agent-repo/$IMAGE:$GITHUB_SHA" \
           --build-arg GITHUB_SHA="$GITHUB_SHA" \
           --build-arg GITHUB_REF="$GITHUB_REF" \
           .
 
-    # Push the Docker image to Google Container Registry
+    # Push the Docker image to Google Artifact Registry
     - name: Publish
       run: |-
-        docker push "gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
+        docker push "us-central1-docker.pkg.dev/$PROJECT_ID/agent-repo/$IMAGE:$GITHUB_SHA"
 
     # Set up kustomize
     - name: Set up Kustomize
@@ -69,7 +69,7 @@ jobs:
     - name: Deploy
       run: |-
         # Replace the image tag in the deployment.yaml
-        sed -i "s|image: agent-gke-demo:latest|image: gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA|g" k8s/deployment.yaml
+        sed -i "s|image: agent-gke-demo:latest|image: us-central1-docker.pkg.dev/$PROJECT_ID/agent-repo/$IMAGE:$GITHUB_SHA|g" k8s/deployment.yaml
         
         # Apply the manifests
         kubectl apply -f k8s/
