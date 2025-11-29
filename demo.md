@@ -79,8 +79,31 @@ kubectl logs -f deployment/agent-gke-demo
 
 ## Phase 4: Teardown (Save Money!)
 
-Don't forget to delete the cluster immediately after the demo.
+Follow these steps to ensure **$0 cost** when you are done.
+
+### 1. Delete the Cluster
+This stops the nodes (Compute Engine) and the Load Balancer.
 
 ```bash
 gcloud container clusters delete agent-cluster --zone us-central1-a
 ```
+
+### 2. Delete the Images (Artifact Registry)
+Storage is cheap, but deleting this ensures 0 cost.
+
+```bash
+gcloud artifacts repositories delete agent-repo --location=us-central1
+```
+
+### 3. Verify Everything is Gone (Safety Check)
+Run these commands to make sure no "orphaned" resources are left behind (like a disk or IP address).
+
+```bash
+# Check for leftover Load Balancers (Should be empty)
+gcloud compute forwarding-rules list
+
+# Check for leftover Disks (Should be empty)
+gcloud compute disks list --filter="name:gke-agent-cluster"
+```
+
+**If these lists are empty, you are safe!**
