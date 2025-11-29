@@ -14,7 +14,7 @@ spec:
       labels:
         app: agent-gke-demo
     spec:
-      serviceAccountName: default # Will be updated to use Workload Identity later
+      serviceAccountName: agent-sa # Updated to use Workload Identity
       containers:
       - name: agent-gke-demo
         image: agent-gke-demo:latest # Placeholder, will be replaced by skaffold or manual build
