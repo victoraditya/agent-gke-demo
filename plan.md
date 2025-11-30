@@ -70,5 +70,38 @@ If you fork this repo for a new project:
 
 ## 5. Cost & Scaling Tips
 
-*   **Scale to Zero**: GKE Standard doesn't scale to zero nodes easily. If you want true serverless, consider **Cloud Run** (this code works there too!).
 *   **Spot Instances**: Keep `k8s/deployment.yaml` replicas low (1) and use Spot instances (as configured in our cluster setup) to save ~70%.
+
+## 6. Advanced: Scaling to Multiple Agents (Repo Structure)
+
+As you add more agents (e.g., `AnalystAgent`, `CoderAgent`), a flat file structure will get messy. We recommend refactoring to this modular structure:
+
+```text
+agent-gke-demo/
+├── app/
+│   ├── __init__.py
+│   ├── main.py              # Entry point (Flask/FastAPI)
+│   ├── core/                # Shared logic (Base classes, Config)
+│   │   ├── __init__.py
+│   │   ├── base_agent.py    # The parent Agent class
+│   │   └── config.py        # Env vars and settings
+│   └── agents/              # Specific agents (One folder per agent)
+│       ├── __init__.py
+│       ├── researcher/
+│       │   ├── __init__.py
+│       │   ├── agent.py     # Logic for Researcher
+│       │   └── prompts.py   # Prompts for Researcher
+│       └── writer/
+│           ├── __init__.py
+│           ├── agent.py
+│           └── prompts.py
+├── k8s/                     # Kubernetes manifests
+├── tests/                   # Unit and Integration tests
+├── Dockerfile
+└── requirements.txt
+```
+
+**Why this is better:**
+1.  **Separation of Concerns**: Each agent has its own folder.
+2.  **Shared Core**: Common logic (like Vertex AI connection) lives in `core/`.
+3.  **Scalability**: Easy to add `agents/coder/` without touching other files.
