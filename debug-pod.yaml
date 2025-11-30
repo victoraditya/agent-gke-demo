@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-wi
+  namespace: default
+spec:
+  serviceAccountName: agent-sa
+  containers:
+  - name: debug
+    image: google/cloud-sdk:slim
+    command: ["sleep", "infinity"]

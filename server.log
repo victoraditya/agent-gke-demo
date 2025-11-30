@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/aditya/Desktop/agentgke/main.py", line 3, in <module>
+    from agents import researcher_agent, writer_agent
+  File "/Users/aditya/Desktop/agentgke/agents.py", line 10, in <module>
+    ai = Genkit(plugins=[vertex_ai.init(project_id=project_id, location=location)])
+                         ^^^^^^^^^^^^^^
+AttributeError: module 'genkit.plugins.vertex_ai' has no attribute 'init'
