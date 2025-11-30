@@ -105,3 +105,33 @@ agent-gke-demo/
 1.  **Separation of Concerns**: Each agent has its own folder.
 2.  **Shared Core**: Common logic (like Vertex AI connection) lives in `core/`.
 3.  **Scalability**: Easy to add `agents/coder/` without touching other files.
+
+## 7. Enterprise Architecture: Using MCP (Model Context Protocol)
+
+For an enterprise observability scenario (e.g., "Why is the checkout slow?"), you should use **MCP (Model Context Protocol)**.
+
+Instead of hardcoding API calls to Datadog or Splunk inside your agent, you run **MCP Servers** that expose these tools in a standard way.
+
+### Proposed Architecture
+
+```mermaid
+graph TD
+    User -->|Question| MainAgent[Orchestrator Agent]
+    
+    subgraph "MCP Layer (Standard Interfaces)"
+        MainAgent <-->|MCP Protocol| ObsServer[Observability MCP Server]
+        MainAgent <-->|MCP Protocol| LogServer[Logging MCP Server]
+    end
+    
+    subgraph "Infrastructure"
+        ObsServer -->|Query| Dynatrace[Dynatrace/Prometheus]
+        LogServer -->|Query| Splunk[Splunk/Cloud Logging]
+    end
+```
+
+### Why MCP?
+1.  **Standardization**: Your agent doesn't need to know *how* to query Splunk. It just asks the MCP server "Get logs for service X".
+2.  **Security**: The MCP server handles authentication to the backend tools. The agent just needs permission to talk to the MCP server.
+3.  **Reusability**: You can swap the backend (e.g., switch from Splunk to Datadog) by changing the MCP server, without rewriting the agent.
+
+**Implementation Tip**: deploy your MCP servers as sidecars or separate services in your GKE cluster, and configure your Main Agent to connect to them via `stdio` (if local) or SSE (Server-Sent Events) over HTTP.
