@@ -41,14 +41,16 @@ This is like a "robot user" that GitHub Actions will use to deploy your code.
     *   **Storage Admin** (often needed for build logs)
 6.  Click **Continue**, then **Done**.
 
-## Step 4: Generate a Key
-
-1.  In the Service Accounts list, click on the email address of the account you just created.
-2.  Go to the **KEYS** tab (top bar).
-3.  Click **ADD KEY** > **Create new key**.
-4.  Select **JSON**.
-5.  Click **Create**.
-6.  A file will automatically download to your computer. **Keep this safe!** This is the `GCP_SA_KEY` you will put in GitHub Secrets.
+## Step 4: Generate a Key (Optional / Local Dev Only)
+ 
+ **Note**: For CI/CD, we now use **Workload Identity Federation**, so you do **NOT** need this key for GitHub Actions. You might still want it for local testing if `gcloud auth` doesn't work.
+ 
+ 1.  In the Service Accounts list, click on the email address of the account you just created.
+ 2.  Go to the **KEYS** tab (top bar).
+ 3.  Click **ADD KEY** > **Create new key**.
+ 4.  Select **JSON**.
+ 5.  Click **Create**.
+ 6.  A file will automatically download to your computer. **Keep this safe!**
 
 ## Step 5: Install Google Cloud CLI (gcloud)
 

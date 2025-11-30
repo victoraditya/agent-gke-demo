@@ -4,9 +4,9 @@ This guide explains how the Agentic AI system is implemented and how to deploy i
 
 ## 1. Code Structure
 
--   **`main.py`**: The entry point. It sets up a Flask server. When you send a POST request to `/run-agents`, it initializes the agents and runs them in sequence.
--   **`agents.py`**: Defines the `ResearcherAgent` and `WriterAgent` classes. They inherit from a base `Agent` class and use LangChain's `VertexAI` wrapper to interact with Google's Gemini models.
--   **`Dockerfile`**: Instructions to build the Docker image. It uses a lightweight Python base image, installs dependencies, and runs the Flask app.
+-   **`main.py`**: The entry point. It sets up a Flask server. When you send a POST request to `/run-agents`, it initializes the agents and runs them using the **Google ADK** `InMemoryRunner`.
+-   **`agents.py`**: Defines the `researcher` and `writer` agents using the **Google ADK** (`google-adk`) library. They use the `Agent` class and `gemini-2.0-flash-exp` model.
+-   **`Dockerfile`**: Instructions to build the Docker image. It uses a lightweight Python base image, installs dependencies (including `google-adk`), and runs the Flask app.
 
 ## 2. Prerequisites for Deployment
 
@@ -31,18 +31,19 @@ Before you can deploy, you need to set up the following on Google Cloud Platform
     -   Store logs (`Storage Admin`).
 4.  **GitHub Secrets**: Go to your repository settings -> Secrets and variables -> Actions, and add:
     -   `GCP_PROJECT_ID`: Your Google Cloud Project ID.
-    -   `GCP_SA_KEY`: The JSON key of the service account you created.
     -   `GKE_CLUSTER`: The name of your GKE cluster (e.g., `agent-cluster`).
     -   `GKE_ZONE`: The zone of your cluster (e.g., `us-central1-a`).
+    *Note: `GCP_SA_KEY` is NO LONGER REQUIRED due to Workload Identity Federation.*
 
 ## 3. Deployment Process
 
 The deployment is automated using GitHub Actions (`.github/workflows/deploy.yaml`).
 
 1.  **Trigger**: When you push code to the `main` branch.
-2.  **Build**: The workflow builds the Docker image from the `Dockerfile`.
-3.  **Publish**: It pushes the image to **Google Artifact Registry** (`us-central1-docker.pkg.dev`).
-4.  **Deploy**: It uses `kubectl` to apply the Kubernetes manifests:
+2.  **Authenticate**: The workflow uses **Workload Identity Federation** to securely authenticate with Google Cloud without long-lived keys.
+3.  **Build**: The workflow builds the Docker image from the `Dockerfile`.
+4.  **Publish**: It pushes the image to **Google Artifact Registry** (`us-central1-docker.pkg.dev`).
+5.  **Deploy**: It uses `kubectl` to apply the Kubernetes manifests:
     -   Updates the `deployment.yaml` with the new image tag.
     -   Applies `deployment.yaml` to update the pods.
     -   Applies `service.yaml` to ensure the LoadBalancer is active.
@@ -73,24 +74,31 @@ For local development on macOS, it is best to use `brew` for system tools and `p
 4.  **Authenticate**:
     You have two options:
     *   **Option A (Standard)**: `gcloud auth application-default login`
-    *   **Option B (Service Account - Recommended)**:
+    *   **Option B (Service Account)**:
         1.  Download a service account key (JSON).
         2.  `export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/key.json`
 
 5.  **Run App**:
     ```bash
+    # Enable Vertex AI for ADK
+    export GOOGLE_GENAI_USE_VERTEXAI=true
+    export GOOGLE_CLOUD_PROJECT=your-project-id
+    export GOOGLE_CLOUD_LOCATION=us-central1
+    
     python main.py
     ```
 
 ## 5. Workload Identity (Security)
 
-We use **Workload Identity** to securely allow your GKE Pods to access Google Cloud APIs (like Vertex AI) without storing long-lived keys in the container.
+We use **Workload Identity** in two places:
 
-*   **Kubernetes Service Account (`agent-sa`)**: This is an account inside the cluster.
-*   **Google Service Account (`local-dev-sa`)**: This is an account in GCP with permissions.
-*   **Binding**: We "bind" them together so `agent-sa` can "act as" `local-dev-sa`.
+1.  **GKE Pods**: Allows the running application to access Vertex AI.
+    *   **Kubernetes Service Account (`agent-sa`)** bound to **Google Service Account (`local-dev-sa`)**.
+    *   This is why we added the `--workload-pool` flag when creating the cluster.
 
-This is why we added the `--workload-pool` flag when creating the cluster and the `iam.gke.io/gcp-service-account` annotation in `k8s/serviceaccount.yaml`.
+2.  **GitHub Actions (CI/CD)**: Allows the deployment workflow to push images and update the cluster.
+    *   **Workload Identity Pool (`github-pool`)** trusts tokens from your GitHub repository.
+    *   This eliminates the need for `GCP_SA_KEY` secrets.
 
 > **Troubleshooting**: If you still get 403 errors, ensure your Node Pool is configured to use the GKE Metadata Server:
 > ```bash

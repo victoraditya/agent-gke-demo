@@ -13,26 +13,26 @@ The **Google Cloud Gen AI Agents Starter Pack** is an official GitHub repository
 *   **Frontend**: It often includes a React/Streamlit frontend.
 *   **Why use it?**: It's a "Battery Included" template. You clone it, run `terraform apply`, and you have a full stack app.
 
-## 2. What is "ADK" (Firebase Genkit)?
-
-When you say "ADK", you likely mean **Firebase Genkit**. This is Google's new open-source framework (SDK) specifically for building production-ready agents.
-
-*   **Standardization**: Instead of writing raw Python/LangChain code, you define "Flows".
-*   **Developer UI**: It comes with a local "Developer UI" where you can run your flows, inspect traces, and debug prompts visually.
-*   **Deployment**: It is designed to deploy natively to **Cloud Functions** or **Cloud Run**.
-
-### Genkit vs. LangChain (What we used)
-*   **LangChain**: The "Swiss Army Knife". Huge ecosystem, works everywhere, but can be messy.
-*   **Genkit**: The "Google Way". Tightly integrated with Google Cloud (Vertex AI, Cloud Logging, Tracing). It's more opinionated but easier to debug/monitor on GCP.
-
-## 3. Comparison: Our GKE Setup vs. Starter Pack
-
-| Feature | Our GKE Setup (What we built) | Agent Starter Pack (Cloud Run + Genkit) |
-| :--- | :--- | :--- |
-| **Compute** | **GKE (Kubernetes)** | **Cloud Run (Serverless)** |
-| **Cost** | Fixed (Nodes run 24/7 unless scaled) | Pay-per-request (Scales to zero) |
-| **Control** | High (Custom networking, GPUs, sidecars) | Medium (Container-based, HTTP only) |
-| **Framework** | LangChain (Python) | Genkit (TypeScript/Go) or LangChain (Python) |
+## 2. What is "ADK" (Google Agent Development Kit)?
+ 
+ **Google ADK** (`google-adk`) is a Python library for building production-ready agents. It provides a structured way to define agents, tools, and runners, moving away from the "chain" concept of LangChain towards a more "agentic" workflow.
+ 
+ *   **Standardization**: Defines `Agent`, `Tool`, and `Runner` classes.
+ *   **Integration**: First-class support for Vertex AI and Gemini.
+ *   **Production**: Designed for reliability and observability.
+ 
+ ### Why we chose Google ADK
+ *   **LangChain**: A popular "Swiss Army Knife" framework. It's flexible but can be complex to debug and maintain in production.
+ *   **Google ADK**: The "Google Native" choice. It offers first-class integration with Vertex AI, cleaner abstractions for agent state, and better observability out of the box. We chose ADK for this project to ensure enterprise-grade reliability and maintainability.
+ 
+ ## 3. Comparison: Our GKE Setup vs. Starter Pack
+ 
+ | Feature | Our GKE Setup (What we built) | Agent Starter Pack (Cloud Run) |
+ | :--- | :--- | :--- |
+ | **Compute** | **GKE (Kubernetes)** | **Cloud Run (Serverless)** |
+ | **Cost** | Fixed (Nodes run 24/7 unless scaled) | Pay-per-request (Scales to zero) |
+ | **Control** | High (Custom networking, GPUs, sidecars) | Medium (Container-based, HTTP only) |
+ | **Framework** | **Google ADK (Python)** | Genkit (TypeScript/Go) |
 | **Best For** | **Enterprise Platform Teams** building complex, multi-agent systems. | **Product Teams** building a specific agent app quickly. |
 
 ## 4. Recommendation for You

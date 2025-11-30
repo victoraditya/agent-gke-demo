@@ -40,7 +40,7 @@ graph TD
     -   Manages the flow of data between the Researcher and Writer agents.
 
 2.  **Agents (`agents.py`)**:
-    -   **Researcher Agent**: Uses `langchain-google-vertexai` to query the Gemini Pro model. It takes a topic and produces a detailed summary.
+    -   **Researcher Agent**: Uses `google-adk` to query the Gemini Pro model. It takes a topic and produces a detailed summary.
     -   **Writer Agent**: Takes the summary from the Researcher and uses Gemini Pro to write a blog post.
 
 3.  **Infrastructure**:

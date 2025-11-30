@@ -8,7 +8,7 @@ Observability is critical for AI agents because you need to know *why* an agent 
 | :--- | :--- | :--- |
 | **Infrastructure** | "Is the pod crashing? Is CPU high?" | **GKE Dashboard / Cloud Monitoring** |
 | **Application** | "Did the API return 200 OK?" | **Cloud Logging (stdout)** |
-| **AI / Logic** | "What prompt was sent? Why did it choose that tool?" | **LangSmith / OpenTelemetry** |
+| **AI / Logic** | "What prompt was sent? Why did it choose that tool?" | **Google Cloud Trace / OpenTelemetry** |
 
 ---
 
@@ -33,29 +33,19 @@ logging.info('{"event": "agent_start", "topic": "AI"}')
 
 To see the "Chain of Thought" (e.g., Researcher -> Gemini -> Summary -> Writer), you need **Tracing**.
 
-### Option A: LangSmith (Easiest for LangChain)
-If you use LangChain, this is the native way.
-
-1.  Sign up for LangSmith.
-2.  Add environment variables in `k8s/deployment.yaml`:
-    ```yaml
-    env:
-      - name: LANGCHAIN_TRACING_V2
-        value: "true"
-      - name: LANGCHAIN_API_KEY
-        valueFrom:
-          secretKeyRef:
-            name: langchain-secret
-            key: api-key
-    ```
-3.  **Result**: You see a beautiful UI showing every step the agent took.
+### Option A: Google Cloud Trace (Native)
+ Since we are using **Google ADK** on GCP, this is the default and recommended option.
+ 
+ 1.  **Enable API**: Ensure Cloud Trace API is enabled.
+ 2.  **ADK Integration**: The `google-adk` library automatically integrates with Google Cloud Trace when running in a GCP environment.
+ 3.  **Result**: You can see traces in the Google Cloud Console under **Trace**.
 
 ### Option B: OpenTelemetry (Enterprise Standard)
 If you want to send data to **Dynatrace**, **Splunk**, or **Google Cloud Trace**.
 
 1.  Install packages:
     ```bash
-    pip install opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-langchain
+    pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-gcp-trace
     ```
 2.  Initialize in `main.py`:
     ```python
@@ -70,16 +60,11 @@ If you want to send data to **Dynatrace**, **Splunk**, or **Google Cloud Trace**
     # Or export to Google Cloud Trace
     ```
 
-### Option C: Google Cloud Trace (Native)
-Since you are on GCP, you can send traces directly to Cloud Trace.
-
-1.  Add `opencensus-ext-stackdriver` to `requirements.txt`.
-2.  It links the "Trace" in GCP Console to the "Log" entry.
 
 ---
 
 ## 4. Recommendation for You
 
-**Start with Option A (LangSmith)** for development. It is purpose-built for debugging prompts.
+**Start with Option A (Google Cloud Trace)**. It is native to the platform and requires zero extra setup with ADK.
 
 **Move to Option B (OpenTelemetry)** for production if your company uses Dynatrace/Splunk, so your AI metrics sit alongside your database metrics.

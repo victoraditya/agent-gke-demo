@@ -61,16 +61,20 @@ pip install -r requirements.txt
 ```
 
 ## Step 4: Run the Application
-
-Start the Flask server.
-
-```bash
-# Set the GCP Project ID environment variable (Optional but recommended)
-export GOOGLE_CLOUD_PROJECT=agent-gke-demo
-
-# Run the app
-python main.py
-```
+ 
+ Start the Flask server.
+ 
+ ```bash
+ # Set the GCP Project ID and Location environment variables for ADK
+ export GOOGLE_CLOUD_PROJECT=agent-gke-demo
+ export GOOGLE_CLOUD_LOCATION=us-central1
+ 
+ # Enable Vertex AI for ADK
+ export GOOGLE_GENAI_USE_VERTEXAI=true
+ 
+ # Run the app
+ python main.py
+ ```
 *   You should see output like `Running on http://0.0.0.0:8080`.
 
 ## Step 5: Test with cURL

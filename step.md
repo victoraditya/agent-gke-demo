@@ -27,7 +27,6 @@ The automated deployment needs access to your GCP project.
 | Secret Name | Value |
 | :--- | :--- |
 | `GCP_PROJECT_ID` | Your Google Cloud Project ID (e.g., `my-agent-project-123`). |
-| `GCP_SA_KEY` | Paste the entire content of your Service Account JSON key file. |
 | `GKE_CLUSTER` | `agent-cluster` (or whatever you named it). |
 | `GKE_ZONE` | `us-central1-a` (or the zone you chose). |
 

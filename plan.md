@@ -6,11 +6,11 @@ This repository is designed to be a **production-ready template** for deploying 
 
 Understanding the pieces will help you know what to change:
 
-*   **The Brain (`agents.py`)**: This contains the logic. It uses **LangChain** and **Vertex AI** to define *what* the agent does.
-*   **The Body (`main.py`)**: This is a **Flask** web server. It receives requests (JSON) and triggers the agents.
+*   **The Brain (`agents.py`)**: This contains the logic. It uses **Google ADK** (`google-adk`) and **Vertex AI** to define *what* the agent does.
+*   **The Body (`main.py`)**: This is a **Flask** web server. It receives requests (JSON) and triggers the agents using `InMemoryRunner`.
 *   **The Container (`Dockerfile`)**: Packages everything into a lightweight image.
 *   **The Infrastructure (`k8s/`)**: Kubernetes configuration to run the container on GKE.
-*   **The Pipeline (`.github/workflows/`)**: Automates the build and deployment.
+*   **The Pipeline (`.github/workflows/`)**: Automates the build and deployment using **Workload Identity**.
 
 ---
 
@@ -21,13 +21,13 @@ Follow these steps to turn this "Researcher/Writer" demo into your own product.
 ### Step A: Define Your Agent Logic (`agents.py`)
 This is where 90% of your work will happen.
 
-1.  **Change the Prompt**: Look at the `prompt` variable in the `Agent` class.
+1.  **Change the Prompt**: Look at the `instruction` parameter in the `Agent` class.
     *   *Current*: "You are a researcher..."
     *   *New*: "You are a senior SQL analyst. Given a schema, write a query..."
-2.  **Change the Model**: In `__init__`, change `model_name`.
+2.  **Change the Model**: In `Agent(...)`, change `model`.
     *   `gemini-1.5-flash`: Fast, cheap (good for simple tasks).
     *   `gemini-1.5-pro`: Smarter, more expensive (good for complex reasoning).
-3.  **Add Tools**: If your agent needs to search the web or query a database, add LangChain Tools here.
+3.  **Add Tools**: If your agent needs to search the web or query a database, add ADK Tools here.
 
 ### Step B: Update the API (`main.py`)
 If your agent needs different inputs (e.g., a file upload instead of a text topic), change the Flask route.
@@ -39,8 +39,9 @@ If your agent needs different inputs (e.g., a file upload instead of a text topi
 Always test locally before deploying.
 
 1.  Set your credentials: `export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/key.json`
-2.  Run: `python main.py`
-3.  Test: `curl -X POST http://localhost:8080/...`
+2.  Set ADK env vars: `export GOOGLE_GENAI_USE_VERTEXAI=true`
+3.  Run: `python main.py`
+4.  Test: `curl -X POST http://localhost:8080/...`
 
 ---
 
@@ -65,8 +66,9 @@ If you fork this repo for a new project:
 
 1.  **Create a New GCP Project**: Don't mix environments.
 2.  **Create a New Repo**: Copy the files.
-3.  **Set Secrets**: Add `GCP_PROJECT_ID`, `GCP_SA_KEY`, etc., to the new GitHub repo.
-4.  **Push**: The CI/CD pipeline will handle the rest.
+3.  **Set Secrets**: Add `GCP_PROJECT_ID` to the new GitHub repo. (No key needed!)
+4.  **Setup Workload Identity**: Run the setup commands for the new repo.
+5.  **Push**: The CI/CD pipeline will handle the rest.
 
 ## 5. Cost & Scaling Tips
 
