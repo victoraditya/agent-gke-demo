@@ -135,3 +135,40 @@ graph TD
 3.  **Reusability**: You can swap the backend (e.g., switch from Splunk to Datadog) by changing the MCP server, without rewriting the agent.
 
 **Implementation Tip**: deploy your MCP servers as sidecars or separate services in your GKE cluster, and configure your Main Agent to connect to them via `stdio` (if local) or SSE (Server-Sent Events) over HTTP.
+
+### 8. Thinking Tool: Evaluating MCP Deployment Patterns
+
+When deploying MCP servers on GKE, you have two main options. Use this decision matrix to choose.
+
+#### Option A: The Sidecar Pattern
+Run the MCP server in the **same Pod** as your Agent. They talk via `localhost` or `stdio`.
+
+*   **✅ Pros**:
+    *   **Zero Latency**: Communication is instant.
+    *   **Simple Auth**: No need for mTLS or tokens between them; they share the same network namespace.
+    *   **Atomic Scaling**: If you scale the Agent to 10 replicas, you automatically get 10 MCP servers.
+*   **❌ Cons**:
+    *   **Resource Waste**: If the Agent is CPU heavy but the MCP server is idle, you waste resources scaling both.
+    *   **Coupling**: Updating the MCP server requires restarting the Agent.
+
+#### Option B: The Separate Service Pattern (Microservices)
+Run the MCP server as its **own Deployment and Service**. The Agent talks to it via HTTP/SSE (e.g., `http://observability-mcp.default.svc.cluster.local`).
+
+*   **✅ Pros**:
+    *   **Independent Scaling**: Scale the Agent to 100 pods, keep the MCP server at 2 pods.
+    *   **Reusability**: Multiple different Agents (e.g., "SRE Bot" and "Support Bot") can share the same MCP server.
+    *   **Decoupled Deploys**: Update the MCP server without touching the Agents.
+*   **❌ Cons**:
+    *   **Network Latency**: Adds milliseconds to every tool call.
+    *   **Security**: You need to secure the traffic (NetworkPolicies or mTLS).
+
+#### Decision Matrix
+
+| Criteria | Choose Sidecar | Choose Separate Service |
+| :--- | :--- | :--- |
+| **Coupling** | 1-to-1 (Agent uses this tool exclusively) | Many-to-1 (Many agents use this tool) |
+| **State** | Stateless (e.g., Calculator) | Stateful (e.g., Caching layer, Database connection pool) |
+| **Team Structure** | Same team owns Agent + Tool | Different teams (Platform Team owns Tool, Product Team owns Agent) |
+| **Scaling Profile** | Symmetrical (Agent & Tool load correlates) | Asymmetrical (Agent is heavy, Tool is light) |
+
+**Recommendation for Observability**: Start with **Option B (Separate Service)**. Your "Dynatrace MCP" will likely be used by many different agents, and it handles connection pooling to the backend, which is better done centrally.
