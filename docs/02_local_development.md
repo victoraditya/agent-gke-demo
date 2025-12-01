@@ -6,10 +6,10 @@ Before deploying to the cloud, it's best to run and test the agents locally on y
 
 The project is structured as follows:
 
-*   **`agents.py`**: Defines the AI Agents using **Google ADK**.
-    *   `researcher`: Uses `gemini-2.0-flash-exp` to search/summarize.
-    *   `writer`: Uses the summary to write a blog post.
-*   **`main.py`**: The **FastAPI** web server.
+*   **`app/agents/`**: Defines the AI Agents using **Google ADK**.
+    *   `researcher.py`: Uses `gemini-2.0-flash-exp` to search/summarize.
+    *   `writer.py`: Uses the summary to write a blog post.
+*   **`app/main.py`**: The **FastAPI** web server.
     *   Exposes `POST /run-agents`.
     *   Orchestrates the flow: `Researcher -> Writer`.
 *   **`Dockerfile`**: Packages the app for GKE.
@@ -47,7 +47,7 @@ export GOOGLE_CLOUD_LOCATION=us-central1
 Start the FastAPI server using `uvicorn`.
 
 ```bash
-uvicorn main:app --reload --port 8080
+uvicorn app.main:app --reload --port 8080
 ```
 
 ## 4. Testing
