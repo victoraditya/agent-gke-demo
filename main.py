@@ -1,25 +1,33 @@
 import os
 import uuid
-import asyncio
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from google.adk.runners import InMemoryRunner
 from google.genai import types
 from agents import researcher, writer
 
 # Configure Environment for Vertex AI
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "true"
-# GOOGLE_CLOUD_PROJECT and LOCATION should be set in env or Dockerfile
-# GOOGLE_APPLICATION_CREDENTIALS should be set for local test
 
-app = Flask(__name__)
+app = FastAPI(
+    title="Agent GKE Demo",
+    description="ADK Agents running on GKE with FastAPI",
+    version="1.0.0"
+)
 
 # Initialize Runners
-# We use InMemoryRunner for simplicity in this PoC.
-# In production, you might use a persistent runner or a different architecture.
 researcher_runner = InMemoryRunner(agent=researcher)
 writer_runner = InMemoryRunner(agent=writer)
 
-async def run_adk_agent(runner, prompt_text):
+class AgentInput(BaseModel):
+    topic: str = "Artificial Intelligence in 2024"
+
+class AgentOutput(BaseModel):
+    topic: str
+    research_summary: str
+    blog_post: str
+
+async def run_adk_agent(runner, prompt_text: str) -> str:
     session_id = str(uuid.uuid4())
     user_id = "api-user"
     
@@ -45,33 +53,29 @@ async def run_adk_agent(runner, prompt_text):
                     
     return response_text
 
-@app.route('/', methods=['GET'])
-def health_check():
-    return "Agent Service is Running (Google ADK Edition)!"
+@app.get("/")
+async def health_check():
+    return {"status": "Agent Service is Running (Google ADK + FastAPI Edition)!"}
 
-@app.route('/run-agents', methods=['POST'])
-async def run_agents():
-    data = request.json
-    topic = data.get('topic', 'Artificial Intelligence in 2024')
-    
+@app.post("/run-agents", response_model=AgentOutput)
+async def run_agents(input_data: AgentInput):
     try:
         # Agent 1: Research
-        research_output = await run_adk_agent(researcher_runner, topic)
+        research_output = await run_adk_agent(researcher_runner, input_data.topic)
         
         # Agent 2: Write
-        # We pass the research output as input to the writer
         writer_input = f"Research Material:\n{research_output}"
         final_post = await run_adk_agent(writer_runner, writer_input)
         
-        return jsonify({
-            "topic": topic,
-            "research_summary": research_output,
-            "blog_post": final_post
-        })
+        return AgentOutput(
+            topic=input_data.topic,
+            research_summary=research_output,
+            blog_post=final_post
+        )
     except Exception as e:
-        app.logger.error(f"Error running agents: {e}")
-        return jsonify({"error": str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
+    import uvicorn
     port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)

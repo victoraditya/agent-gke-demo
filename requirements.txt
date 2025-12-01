@@ -1,3 +1,4 @@
-flask[async]
-gunicorn
+fastapi
+uvicorn
+pydantic
 google-adk

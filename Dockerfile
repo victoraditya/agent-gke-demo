@@ -23,4 +23,4 @@ COPY . .
 EXPOSE 8080
 
 # Run with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--timeout", "0", "main:app"]
+CMD exec uvicorn main:app --host 0.0.0.0 --port $PORT
