@@ -59,7 +59,7 @@ gcloud container clusters create agent-cluster \
   --spot \
   --disk-size=30GB \
   --enable-autoscaling --min-nodes 1 --max-nodes 3 \
-  --workload-pool=${PROJECT_ID}.svc.id.goog
+  --workload-pool=agent-gke-demo.svc.id.goog
 ```
 
 ## Step 5: Connect kubectl
