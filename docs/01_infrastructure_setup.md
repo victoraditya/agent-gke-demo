@@ -79,3 +79,41 @@ kubectl get nodes
 ---
 
 **🎉 Success!** Your infrastructure is ready. Move on to **[Part 2: Local Development](02_local_development.md)**.
+
+---
+
+## 6. Cost Management (Cleanup & Restart) 💸
+
+**⚠️ Important**: GKE clusters cost money even when idle. If you are done for the day, delete the cluster to avoid charges.
+
+### How to Delete (Stop Billing)
+Run these commands to delete the expensive resources:
+
+```bash
+# 1. Delete the GKE Cluster (Stops Compute Charges)
+gcloud container clusters delete agent-cluster --zone us-central1-a --quiet
+
+# 2. (Optional) Delete Artifact Registry (Stops Storage Charges)
+# Only do this if you want to delete your Docker images too.
+gcloud artifacts repositories delete agent-repo --location=us-central1 --quiet
+```
+
+### How to Restart (Start Everything Again)
+When you want to work again, just re-run **Step 3** (if you deleted the repo) and **Step 4** (Cluster creation) from this guide.
+
+1.  **Create Cluster**:
+    ```bash
+    gcloud container clusters create agent-cluster \
+      --zone us-central1-a \
+      --machine-type e2-small \
+      --num-nodes 1 \
+      --spot \
+      --disk-size=30GB \
+      --enable-autoscaling --min-nodes 1 --max-nodes 3 \
+      --workload-pool=${PROJECT_ID}.svc.id.goog
+    ```
+2.  **Reconnect**:
+    ```bash
+    gcloud container clusters get-credentials agent-cluster --zone us-central1-a
+    ```
+3.  **Deploy**: Push your code to GitHub again, or trigger the workflow manually to re-deploy your app.
