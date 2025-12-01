@@ -8,19 +8,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install dependencies
+# Copy the application code
+COPY app/ app/
 COPY requirements.txt .
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create a non-root user and switch to it
 RUN adduser --disabled-password --gecos '' appuser
 USER appuser
 
-# Copy application code
-COPY . .
-
 # Expose the port
 EXPOSE 8080
 
-# Run with Gunicorn
-CMD exec uvicorn main:app --host 0.0.0.0 --port $PORT
+# Run with Uvicorn
+CMD exec uvicorn app.main:app --host 0.0.0.0 --port $PORT

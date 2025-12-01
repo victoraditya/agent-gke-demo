@@ -4,7 +4,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from google.adk.runners import InMemoryRunner
 from google.genai import types
-from agents import researcher, writer
+from app.agents.researcher import researcher
+from app.agents.writer import writer
 
 # Configure Environment for Vertex AI
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "true"
